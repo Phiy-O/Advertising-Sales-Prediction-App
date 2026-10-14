@@ -1,12 +1,21 @@
 from pathlib import Path
 
 import joblib
+import pandas as pd
 import streamlit as st
 
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_PATH = BASE_DIR / "model" / "model_regresi_advertising.pkl"
 SCALER_PATH = BASE_DIR / "model" / "scaler_advertising.pkl"
+DATASET_PATH = BASE_DIR / "data" / "advertising.csv"
+
+
+@st.cache_data
+def load_dataset():
+    if not DATASET_PATH.is_file():
+        return None
+    return pd.read_csv(DATASET_PATH)
 
 
 @st.cache_resource
@@ -42,14 +51,14 @@ with st.form("prediction_form"):
     tv = st.number_input(
         "TV advertising budget (USD)",
         min_value=0.0,
-        value=100.0,
+        value=0.0,
         step=1.0,
         help="Budget allocated to TV advertising.",
     )
     radio = st.number_input(
         "Radio advertising budget (USD)",
         min_value=0.0,
-        value=25.0,
+        value=0.0,
         step=1.0,
         help="Budget allocated to Radio advertising.",
     )
@@ -76,3 +85,23 @@ if submitted:
             f"Result based on a budget of **${tv:,.2f}** for TV and **${radio:,.2f}** for Radio."
         )
         st.success("Prediction generated successfully.")
+
+with st.expander("Explore the training dataset"):
+    dataset = load_dataset()
+    if dataset is None:
+        st.warning("The local dataset preview is unavailable.")
+    else:
+        st.write(
+            "This sample shows the TV, Radio, and Newspaper advertising budgets "
+            "and the recorded Sales used for model development."
+        )
+        st.dataframe(dataset.head(10), width="stretch", hide_index=True)
+        st.caption(
+            f"Showing 10 of {len(dataset):,} records. "
+            "Source: Kaggle Advertising Dataset."
+        )
+        st.link_button(
+            "Open the original Kaggle dataset",
+            "https://www.kaggle.com/datasets/ashydv/advertising-dataset",
+            width="stretch",
+        )
